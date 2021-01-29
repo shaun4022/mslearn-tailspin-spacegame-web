@@ -36,7 +36,7 @@ steps:
   displayname: 'Write build info'
   workingdirectory: Tailspin.SpaceGame.Web/wwroot
 
--task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@2
   displayname: 'restore project dependencies'
   inputs:
     command: 'restore'
