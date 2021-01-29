@@ -4,14 +4,47 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- main
+- '*'
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-18.04'
+  demands:
+  - npm
 
 variables:
   buildConfiguration: 'Release'
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+- task: UseDotNet@2
+  displayname: 'Use .NET Core SDK 3.1.300'
+  inputs:
+    PackageType: SDK
+    version: 3.1.300
+
+- task: Npm@1
+  displayName: 'Run npm install'
+  inputs:
+    verbose: false
+
+- script: './node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwroot --output Tailspin.SpaceGame.Web/wwroot'
+  displayName: 'Compile Sass assets'
+
+- Task: gulp@1
+  displayName: 'Run gulp tasks'
+
+- script: 'echo "$(Build.DefinitionName), $(Build.BuildID), $(Build.BuildNumber)" > buildinfo.txt'
+  displayname: 'Write build info'
+  workingdirectory: Tailspin.SpaceGame.Web/wwroot
+
+-task: DotNetCoreCLI@2
+  displayname: 'restore project dependencies'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'build the project - Release'
+  inputs:
+    command: 'build'
+    arguments: '--no-restore --configuration Release'
+    projects: '**/*.csproj'          
